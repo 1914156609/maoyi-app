@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {readSessionMetadata} from './qa-session-metadata.mjs';
+const redis=(...args)=>execFileSync('redis-cli',['-p','6388','--raw',...args],{encoding:'utf8'}).trim();
+const keys=redis('--scan','--pattern','login_tokens:*').split('\n').filter(Boolean);
+const meta=readSessionMetadata(keys.map(key=>redis('GET',key)));
+const baseline=JSON.parse(fs.readFileSync('.secrets/qa-r21-suite-before.json'));
+const missing=baseline.sessionKeys.filter(key=>redis('EXISTS',key)==='0');
+const traceFile='.data/qa/api-evidence/http-preview-trace-qa-20261121-r21.ndjson';
+const events=fs.readFileSync(traceFile,'utf8').trim().split('\n').map(JSON.parse).filter(e=>e.at>='2026-11-21T03:49:00Z'&&['/getInfo','/api/auth/login','/api/crafts'].includes(e.route));
+const privateState={at:new Date().toISOString(),remaining:keys.map((key,i)=>({key,...meta[i]})),missingBaselineKeys:missing};
+fs.writeFileSync('.secrets/qa-r21-after113-admin-session-revocation.json',JSON.stringify(privateState,null,2)+'\n',{mode:0o600});
+const before=JSON.parse(fs.readFileSync('.data/qa/api-evidence/r21-user113-disabled-live-before-restore.json'));
+const result={release:'qa-20261121-r21',at:privateState.at,kind:'Readonly actual disabled113 admin getInfo401 after root reload',before113Sessions:before.cachedSessions,after113Sessions:meta.filter(m=>m.userId===113),preSuiteSessionCount:baseline.sessionKeys.length,preSuiteSessionsNowPresent:baseline.sessionKeys.length-missing.length,preSuiteSessionsRemoved:missing.length,retentionInterpretation:'One baseline key is absent after root disabled113 getInfo401. The first safe113 projection was captured at03:52:09, already after actualgetInfo03:52:00, so both projections show the same two remainingH5sessions; do not claim an observed2to1 transition. Attribution of the absent adminsession follows root actual113 flow and exactController revocation behavior, not a pre-deletion raw session capture. Other baseline keys remain.',trace:{file:traceFile,events},uiEvidence:'.data/qa/root-evidence/r21-disabled113-admin-oldsession-rejected.png',mutationByDataAgent:0,newLoginAttemptPendingUserConfirmation:true};
+fs.writeFileSync('.data/qa/api-evidence/r21-user113-disabled-admin-getinfo.json',JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify({getInfoResponses:events.filter(e=>e.route==='/getInfo'&&e.event==='response').map(e=>({at:e.at,http:e.httpStatus,code:e.applicationCode})),oldSessionsRemoved:missing.length,session113Count:meta.filter(m=>m.userId===113).length}));

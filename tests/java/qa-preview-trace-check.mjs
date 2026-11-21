@@ -1,0 +1,27 @@
+import assert from'node:assert/strict';import{EventEmitter}from'node:events';import fs from'node:fs';import{createHash}from'node:crypto';
+import{createQaApiTrace,traceRoute,projectResponse}from'./qa-preview-trace.mjs';
+const checks=[];const check=(name,fn)=>{fn();checks.push({name,passed:true})};const marker='DO_NOT_ARCHIVE_SYNTHETIC_SECRET';
+function capture(path,body,options={}){const events=[];const trace=createQaApiTrace({enabled:true,release:'qa-20261118-r18',app:'h5',method:'POST',path,write:e=>events.push(e),...options});if(!trace)return{events,trace};const response=new EventEmitter();response.statusCode=200;trace.observe(response);response.emit('data',Buffer.from(typeof body==='string'?body:JSON.stringify(body)));response.emit('end');response.emit('close');return{events,trace};}
+check('Disabled by default',()=>assert.equal(createQaApiTrace({path:'/api/auth/login'}),null));
+check('Unknown route cannot leak arbitrary path',()=>assert.equal(traceRoute('/api/'+marker),null));
+check('Query strings never logged',()=>assert.equal(traceRoute('/prod-api/system/user/list?password='+marker),'/system/user/list'));
+check('Public share code redacted',()=>assert.equal(traceRoute('/api/shares/'+marker),'\/api/shares/[redacted]'));
+check('Cache key redacted',()=>assert.equal(traceRoute('/prod-api/monitor/cache/getValue/sys_config:/'+marker),'/monitor/cache/[redacted]'));
+const login=capture('/api/auth/login?password='+marker,{token:marker,password:marker,msg:marker,code:200,user:{id:'103',name:marker,email:marker,roleCode:'employee'}}).events;
+check('Login code/user ID projected without credentials',()=>{assert.equal(login[1].applicationCode,200);assert.equal(login[1].userId,'103');assert.equal(login[1].roleCode,'employee');assert.ok(!JSON.stringify(login).includes(marker));});
+check('Response only one event after end/close',()=>assert.equal(login.length,2));
+const id='GY-20261118-AA8EF67F1F0C43C7';const craft=capture('/api/crafts',{craft:{id,version:2,status:'draft',name:marker,sizes:{secret:marker},parts:[marker]},token:marker}).events;
+check('Craft metadata retained',()=>assert.deepEqual(projectResponse({craft:{id,version:2,status:'draft'}},'/api/crafts'),{craftId:id,version:2,status:'draft'}));
+check('Canonical and derived payloads excluded',()=>assert.ok(!JSON.stringify(craft).includes(marker)));
+check('Untrusted craft metadata rejected',()=>assert.deepEqual(projectResponse({craft:{id:marker,version:marker,status:marker}},'/api/crafts'),{}));
+const share=capture('/api/shares/'+marker,{code:marker,url:marker,expiresAt:1795000000000,craft:{id,version:2,status:'approved'}}).events;
+check('Share metadata kept while code/url omitted',()=>{assert.equal(share[1].expiresAt,1795000000000);assert.equal(share[1].craftId,id);assert.ok(!JSON.stringify(share).includes(marker));});
+const captcha=capture('/prod-api/captchaImage',{img:marker,uuid:marker,code:200}).events;
+check('Captcha response projection skipped',()=>{assert.equal(captcha[1].projectionSkipped,'captcha');assert.equal(captcha[1].applicationCode,undefined);assert.ok(!JSON.stringify(captcha).includes(marker));});
+check('Large bodies never partially serialized',()=>{const e=capture('/api/crafts',{craft:{id,version:1,status:'draft'},payload:marker.repeat(20)},{maxBytes:100}).events;assert.equal(e[1].projectionSkipped,'size-limit');assert.equal(e[1].craftId,undefined);assert.ok(!JSON.stringify(e).includes(marker));});
+check('Invalid JSON excluded',()=>{const e=capture('/api/crafts',marker).events;assert.equal(e[1].jsonParsed,false);assert.ok(!JSON.stringify(e).includes(marker));});
+check('Official login numeric application error projected safely',()=>assert.deepEqual(projectResponse({code:500,msg:marker,uuid:marker},'/login'),{applicationCode:500}));
+check('List counts only',()=>assert.deepEqual(projectResponse({total:21,rows:[{token:marker},{password:marker}]},'/system/user/list'),{total:21,rowCount:2}));
+check('Sink errors never break forwarding hook',()=>assert.doesNotThrow(()=>capture('/api/crafts',{craft:{id}},{write(){throw Error(marker)}})));
+check('Proxy error recorded without private exception text',()=>{const e=[];const t=createQaApiTrace({enabled:true,release:'qa-20261118-r18',app:'admin',method:'GET',path:'/prod-api/system/notice/list',write:x=>e.push(x)});t.upstreamError();t.upstreamError();assert.equal(e.length,2);assert.equal(e[1].httpStatus,502);assert.ok(!JSON.stringify(e).includes(marker));});
+const file='.data/qa/api-evidence/r18-preview-trace-tests.json';fs.writeFileSync(file,JSON.stringify({at:new Date().toISOString(),kind:'Isolated QA trace helper privacy/metadata tests; no live requests or UI',checks,passed:checks.length,failed:0,sourceSha256:createHash('sha256').update(fs.readFileSync('tests/java/qa-preview-trace.mjs')).digest('hex'),runningR17Changed:false},null,2)+'\n');console.log({file,passed:checks.length});

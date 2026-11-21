@@ -1,0 +1,17 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+const qa=JSON.parse(readFileSync('.secrets/qa-accounts.json')),release=process.env.QA_RELEASE_ID||'qa-20261118-r7';
+const sql=q=>execFileSync('mysql',['--protocol=socket','-uroot','--default-character-set=utf8mb4','maoyi_ruoyi','-N','--raw'],{input:q,encoding:'utf8'}).trim();
+const parse=q=>{const r=sql(q);return r?r.split('\n').map(JSON.parse):[]};
+const row=parse("SELECT JSON_OBJECT('id',user_id,'userName',user_name,'nickName',nick_name,'nickLength',CHAR_LENGTH(nick_name),'phone',phonenumber,'email',email,'status',status,'deleted',del_flag,'updateTime',update_time,'updatedBy',update_by) FROM sys_user WHERE user_id=113")[0];
+if(row.userName!==qa.accounts.noManagement.account)throw Error('fixture mismatch');
+const roles=sql('SELECT role_id FROM sys_user_role WHERE user_id=113 ORDER BY role_id').split('\n').map(Number);
+const raw=parse("SELECT JSON_OBJECT('id',oper_id,'title',title,'method',request_method,'url',oper_url,'actor',oper_name,'status',status,'error',error_msg,'at',oper_time,'request',oper_param,'response',json_result) FROM sys_oper_log WHERE oper_url='/system/user' AND oper_param LIKE '%\"userId\":113%' ORDER BY oper_id");
+const logs=raw.map(({request,...r})=>{let p;try{p=JSON.parse(request.trim())}catch{};return {...r,request:p?{userId:p.userId,nickName:p.nickName,nickLength:[...(p.nickName||'')].length,phone:p.phonenumber,email:p.email,status:p.status,roleIds:p.roleIds}:null}});
+const timezone=parse("SELECT JSON_OBJECT('databaseNow',NOW(),'utcNow',UTC_TIMESTAMP(),'systemTimeZone',@@system_time_zone,'sessionTimeZone',@@session.time_zone,'globalTimeZone',@@global.time_zone)")[0];
+const local=JSON.parse(readFileSync('.secrets/java-local.json')).env;
+async function req(path,token,method='GET',body){const r=await fetch('http://127.0.0.1:8081'+path,{method,headers:{'content-type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});return {httpStatus:r.status,body:await r.json()}}
+const a=qa.accounts.systemAdmin,l=await req('/api/auth/login',null,'POST',{type:'employee',account:a.account,password:a.password});if(!l.body.token)throw Error('QA login unavailable');
+let api;try{const r=await req('/system/user/113',l.body.token);const d=r.body.data;api={httpStatus:r.httpStatus,code:r.body.code,user:{userId:d?.userId,nickName:d?.nickName,phonenumber:d?.phonenumber,email:d?.email,status:d?.status,createTime:d?.createTime,updateTime:d?.updateTime},roleIds:r.body.roleIds,passwordSerialized:d?Object.hasOwn(d,'password'):undefined}}finally{await req('/api/auth/logout',l.body.token,'POST',{})}
+const result={release,capturedAt:new Date().toISOString(),kind:'read-only SQL and authenticated HTTP supplemental evidence; no UI substitute',row,roles,operationLogs:logs,api,timezone:{...timezone,jvmDefaultDetected:Intl.DateTimeFormat().resolvedOptions().timeZone,jdbcDeclared:local.DB_URL?.match(/[?&]serverTimezone=([^&]+)/)?.[1]},limitation:'Validation may occur before @Log method invocation; absent failed-validation operation log is not evidence of no rejected HTTP request.'};
+const file='.data/qa/api-evidence/'+release.replace('qa-20261118-','')+'-ui-user113-after.json';writeFileSync(file,JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({file,nickname:row.nickName,roles,logIds:logs.map(l=>({id:l.id,nickLength:l.request?.nickLength,status:l.status})),databaseTime:row.updateTime,apiTime:api.user.updateTime}));

@@ -1,0 +1,59 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index"
+    },
+    {
+      "path": "pages/create/create"
+    },
+    {
+      "path": "pages/calculate/calculate"
+    },
+    {
+      "path": "pages/crafts/crafts"
+    },
+    {
+      "path": "pages/library/library"
+    },
+    {
+      "path": "pages/chart/chart"
+    },
+    {
+      "path": "pages/templates/templates"
+    },
+    {
+      "path": "pages/model/model"
+    },
+    {
+      "path": "pages/profile/profile"
+    },
+    {
+      "path": "pages/settings/settings"
+    },
+    {
+      "path": "pages/share/share"
+    },
+    {
+      "path": "pages/login/login"
+    },
+    {
+      "path": "pages/legal/legal"
+    },
+    {
+      "path": "pages/detail/detail"
+    },
+    {
+      "path": "pages/shared/shared"
+    }
+  ],
+  "globalStyle": {
+    "navigationStyle": "custom",
+    "navigationBarTitleText": "毛衣姑娘",
+    "navigationBarTextStyle": "white",
+    "navigationBarBackgroundColor": "#101318",
+    "backgroundColor": "#101318",
+    "backgroundTextStyle": "light",
+    "rpxCalcMaxDeviceWidth": 414,
+    "rpxCalcBaseDeviceWidth": 414
+  }
+}

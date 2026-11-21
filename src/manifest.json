@@ -1,0 +1,17 @@
+{
+  "name": "毛衣姑娘",
+  "appid": "",
+  "description": "毛衣工艺管理与针行计算",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "",
+    "projectname": "maoyi-app",
+    "setting": { "urlCheck": true, "es6": true, "minified": true },
+    "usingComponents": true
+  },
+  "h5": { "title": "毛衣姑娘", "router": { "mode": "hash" } },
+  "uniStatistics": { "enable": false },
+  "vueVersion": "3"
+}

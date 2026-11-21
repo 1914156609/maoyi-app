@@ -1,0 +1,11 @@
+**/node_modules
+**/target
+**/.git
+**/dist
+.secrets
+.data
+outputs
+docs
+cloud
+server
+tests

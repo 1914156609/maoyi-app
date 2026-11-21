@@ -1,0 +1,14 @@
+import {readFileSync} from 'node:fs';
+import {spawn} from 'node:child_process';
+import {resolve} from 'node:path';
+import {detectDatabaseTimeZone,withDatabaseTimeZone,javaTimeZone} from './java-timezone.mjs';
+import {prepareLocalAdminTools} from './local-admin-tools.mjs';
+const root=resolve(import.meta.dirname,'..');process.chdir(root);
+const {env}=JSON.parse(readFileSync('.secrets/java-local.json','utf8'));
+const dbTimeZone=detectDatabaseTimeZone(env);
+env.DB_URL=withDatabaseTimeZone(env.DB_URL,dbTimeZone);
+const {configFile}=prepareLocalAdminTools();
+console.log('本地数据库/JDBC/JVM 时区已核对：'+dbTimeZone);
+console.log('本机诊断工具仅监听127.0.0.1；Druid凭据保存在.secrets/java-local-tools.json');
+const child=spawn('java',['-Duser.timezone='+javaTimeZone(dbTimeZone),'-jar',process.env.QA_JAVA_JAR||resolve(root,'../maoyi-backend/ruoyi-admin/target/maoyi-backend.jar'),'--spring.profiles.active=druid,maoyi','--spring.config.additional-location=file:'+configFile,'--server.address=127.0.0.1'],{env:{...process.env,...env,BIND_ADDRESS:'127.0.0.1',...(process.env.QA_JAVA_PORT?{PORT:process.env.QA_JAVA_PORT}:{}),...(process.env.QA_PUBLIC_ORIGIN?{PUBLIC_ORIGIN:process.env.QA_PUBLIC_ORIGIN}:{})},stdio:'inherit'});
+for(const sig of ['SIGINT','SIGTERM'])process.on(sig,()=>child.kill(sig));child.on('exit',code=>process.exit(code||0));

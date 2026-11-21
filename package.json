@@ -1,0 +1,81 @@
+{
+  "name": "maoyi-app",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "uni --host 127.0.0.1 --port 5173",
+    "dev:h5": "uni --host 127.0.0.1 --port 5173",
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build": "uni build",
+    "build:h5": "uni build",
+    "build:mp-weixin": "uni build -p mp-weixin",
+    "test": "node --test tests/*.test.mjs",
+    "test:admin": "node --test tests/admin/*.test.mjs",
+    "qa:verify": "node scripts/qa-verify.mjs",
+    "preview": "node scripts/preview.mjs",
+    "dev:server": "node scripts/run-java.mjs",
+    "test:server": "node --test tests/server/*.test.mjs",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.mjs",
+    "dev:admin": "npm --prefix ../maoyi-admin run dev",
+    "build:java": "node scripts/maven.mjs",
+    "build:admin": "npm --prefix ../maoyi-admin run build:prod",
+    "setup:java": "node scripts/setup-java-local.mjs",
+    "test:java": "node --test tests/java/*.test.mjs",
+    "build:wechat-release": "node scripts/build-wechat.mjs",
+    "prepare:deploy": "node scripts/prepare-deploy.mjs",
+    "postinstall": "node scripts/patch-jimp-file-type.mjs"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-5030420261029002",
+    "@dcloudio/uni-components": "3.0.0-5030420261029002",
+    "@dcloudio/uni-h5": "3.0.0-5030420261029002",
+    "@dcloudio/uni-mp-weixin": "3.0.0-5030420261029002",
+    "qrcode-generator": "^2.0.4",
+    "vue": "3.5.46",
+    "vue-i18n": "11.4.23"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.8",
+    "@dcloudio/uni-cli-shared": "3.0.0-5030420261029002",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5030420261029002",
+    "@vue/runtime-core": "3.5.46",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "esbuild": "0.25.12",
+    "rollup": "4.68.5",
+    "vite": "6.4.6"
+  },
+  "overrides": {
+    "@babel/core": "7.29.13",
+    "adm-zip": "0.6.1",
+    "jpeg-js": "0.4.4",
+    "postcss": "8.5.33",
+    "postcss-selector-parser@6.1.2": "6.1.6",
+    "source-map-js": "1.2.2",
+    "ws": "8.23.0",
+    "vue": "$vue",
+    "@vue/server-renderer": "3.5.46",
+    "express": "4.22.3",
+    "body-parser": "1.20.9",
+    "qs": "6.16.1",
+    "path-to-regexp": "0.1.13",
+    "cookie": "0.7.2",
+    "send": "0.19.2",
+    "serve-static": "1.16.3",
+    "jimp": "0.22.12",
+    "vite": "$vite",
+    "@vitejs/plugin-legacy": "6.1.1",
+    "@vitejs/plugin-vue-jsx": "4.2.0",
+    "@intlify/core-base": "11.4.23",
+    "@intlify/shared": "11.4.23",
+    "@intlify/message-compiler": "11.4.23",
+    "@intlify/message-resolver": "9.1.11",
+    "@jimp/core": {
+      "file-type": "21.3.4"
+    },
+    "esbuild@<=0.24.2": "$esbuild"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

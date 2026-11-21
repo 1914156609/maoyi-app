@@ -1,0 +1,21 @@
+{
+  "kind": "user-supplied calculation references",
+  "files": [
+    {
+      "file": "9.mp4",
+      "durationSeconds": 18.833333,
+      "sha256": "8e7a79b40f48ef12cc6d6c288e9c15d576f952ad138f94636cd6a3b58200bdf8"
+    },
+    {
+      "file": "11.mp4",
+      "durationSeconds": 200.481088,
+      "sha256": "7b68c9356f9f3fa27af0c367fb8d254a96cb6c0ac52038f8d8889bb9bebb8b79"
+    },
+    {
+      "file": "13.mp4",
+      "durationSeconds": 277.432018,
+      "sha256": "7fa9ca9765962576936ac17d0c9aa7a97c722178d261583f5404cfad3a15e849"
+    }
+  ],
+  "note": "原视频保留在用户提供的位置；这里只保存核对截图与来源校验信息。"
+}

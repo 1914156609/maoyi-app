@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';import{readFileSync,writeFileSync}from'node:fs';import{createHash}from'node:crypto';
+import{isAllowedFaultRule,classifyFaultRequest}from'./qa-fault-routing.mjs';
+const checks=[];const check=(name,fn)=>{fn();checks.push({name,passed:true})};
+const rule={path:'/captchaImage',method:'GET',surface:'admin',mode:'failOnce',value:500};
+check('Exact admin captcha GET failOnce allowed',()=>assert.equal(isAllowedFaultRule(rule),true));
+for(const method of ['POST','PUT','DELETE','*'])check('Captcha rejects '+method,()=>assert.equal(isAllowedFaultRule({...rule,method}),false));
+for(const surface of ['h5','*'])check('Captcha rejects surface '+surface,()=>assert.equal(isAllowedFaultRule({...rule,surface}),false));
+for(const mode of ['failAlways','timeoutOnce','delayOnce'])check('Captcha rejects mode '+mode,()=>assert.equal(isAllowedFaultRule({...rule,mode}),false));
+for(const path of ['/captchaImage/','/captchaImage/extra','/captchaImage?x=1','/captchaImage/../login','/captchImage','/login'])check('Exact path only '+path,()=>assert.equal(isAllowedFaultRule({...rule,path}),false));
+check('Production API prefix normalizes to captcha path',()=>assert.deepEqual(classifyFaultRequest('admin','/prod-api/captchaImage'),{isApiRequest:true,normalized:'/captchaImage'}));
+check('SPA captcha document is not injectable',()=>assert.equal(classifyFaultRequest('admin','/captchaImage').isApiRequest,false));
+check('Normal account API rule remains allowed',()=>assert.equal(isAllowedFaultRule({...rule,path:'/system/user/list'}),true));
+const file='.data/qa/api-evidence/r15-harness-captcha-allowlist.json';const evidence={at:new Date().toISOString(),release:'qa-20261118-r15',kind:'QA harness isolated allowlist checks; no captcha requested, identified or entered',checks,passed:checks.length,failed:0,source:'tests/java/qa-fault-routing.mjs',sourceSha256:createHash('sha256').update(readFileSync('tests/java/qa-fault-routing.mjs')).digest('hex')};writeFileSync(file,JSON.stringify(evidence,null,2)+'\n');console.log({file,passed:checks.length});

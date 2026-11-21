@@ -1,0 +1,192 @@
+{
+  "status": "视频依据已落实为 video-v1 计算引擎、按尺寸生成的衣片轮廓及同源标注；实际验收状态以 docs/qa/ledger.json 为准。",
+  "userDecision": "胸围按视频口径处理，不另选定义。",
+  "flow": [
+    "选择款式及领型、袖型",
+    "输入各部位尺寸",
+    "输入横密与竖密并统一单位",
+    "计算针数、行数、分段收放针及引返",
+    "依据同一份计算结果生成衣片轮廓与数据标注"
+  ],
+  "references": [
+    {
+      "file": "9.mp4",
+      "range": "00:00–00:18",
+      "observed": "选择款式、输入尺寸与密度、点击计算后生成衣片图和全部标注；该片段展示结果，不说明完整算法。"
+    },
+    {
+      "file": "11.mp4",
+      "range": "00:00–03:20",
+      "observed": "后片单片起针、肩宽针数、腋下双侧平收、单侧收针量、挂肩下段收针行数与节奏分配。"
+    },
+    {
+      "file": "13.mp4",
+      "range": "00:00–04:37",
+      "observed": "挂肩减斜肩的总行数、减去已收针段后的直织行数、后领与斜肩同步引返、肩部余针选择。"
+    }
+  ],
+  "units": {
+    "chest": "视频使用单片平铺胸宽；50cm × 3针/cm = 150针，不再除以2。不要把它与整圈胸围混用。",
+    "density": "横密用于宽度→针数，竖密用于高度→行数。视频例子横密3针/cm，竖密4行/cm。",
+    "uiConversion": "如保留现有每10cm输入单位，30针/10cm与40行/10cm等价于视频3针/cm与4行/cm；进入计算前除以10。"
+  },
+  "confirmedRelationships": [
+    {
+      "name": "单片起针",
+      "formula": "单片胸宽(cm) × 横密(针/cm)",
+      "source": "11.mp4 00:14–01:10"
+    },
+    {
+      "name": "单侧腋下平收",
+      "formula": "单侧平收宽度(cm) × 横密(针/cm)",
+      "source": "11.mp4 00:34–01:18"
+    },
+    {
+      "name": "单侧挂肩收针量",
+      "formula": "(单片总针数 − 肩宽针数 − 2 × 单侧平收针数) / 2",
+      "source": "11.mp4 01:18–01:36"
+    },
+    {
+      "name": "腋下收针段高度",
+      "formula": "该示例按挂肩的1/3，在这段高度内完成腋下收针；再乘竖密得到行数",
+      "source": "11.mp4 01:38–02:24",
+      "limit": "示例规则；不得推断为所有款式固定规则。"
+    },
+    {
+      "name": "腋下直织段",
+      "formula": "(衣长 − 挂肩 − 下摆螺纹长度) × 竖密",
+      "source": "手写公式第2项",
+      "limit": "该公式在手写纸上，视频未给出完整数字算例。"
+    },
+    {
+      "name": "袖框总行数",
+      "formula": "(挂肩 − 斜肩高度) × 竖密",
+      "source": "13.mp4 00:27–00:57"
+    },
+    {
+      "name": "收针后直织",
+      "formula": "袖框总行数 − 已用收针段行数",
+      "source": "13.mp4 00:57–01:03"
+    },
+    {
+      "name": "单侧领口引返针数",
+      "formula": "(领宽针数 − 领底平留针数) / 2",
+      "source": "13.mp4 01:46–01:58"
+    },
+    {
+      "name": "后领引返次数",
+      "formula": "后领深(cm) × 竖密 / 2，每两行引返一次",
+      "source": "13.mp4 01:58–02:18"
+    },
+    {
+      "name": "单肩针数",
+      "formula": "(肩宽针数 − 领宽针数) / 2",
+      "source": "13.mp4 03:34–03:55"
+    }
+  ],
+  "workedExample": {
+    "note": "依照讲解采用的针数继续演算；肩宽与领平留含人工调针，见未明确规则。",
+    "inputs": {
+      "singlePanelChestCm": 50,
+      "stitchesPerCm": 3,
+      "rowsPerCm": 4,
+      "shoulderCm": 37,
+      "chosenShoulderStitches": 110,
+      "underarmFlatCmPerSide": 2,
+      "armholeCm": 23,
+      "shoulderSlopeCm": 3,
+      "neckWidthCm": 20,
+      "backNeckDepthCm": 3,
+      "backNeckFlatCm": 15,
+      "chosenBackNeckFlatStitches": 46
+    },
+    "body": {
+      "castOn": 150,
+      "underarmFlatEach": 6,
+      "shapingStitchesEach": 14,
+      "selectedShapingRows": 30,
+      "schedule": [
+        {
+          "rowsBetween": 6,
+          "stitchesEach": 2,
+          "repeats": 1
+        },
+        {
+          "rowsBetween": 4,
+          "stitchesEach": 2,
+          "repeats": 6
+        }
+      ],
+      "checks": [
+        "6×1+4×6=30行",
+        "2×1+2×6=14针，每侧"
+      ],
+      "armholeTotalRows": 80,
+      "straightRowsAfterShaping": 50
+    },
+    "backNeck": {
+      "widthStitches": 60,
+      "centerHoldStitches": 46,
+      "shortRowStitchesEach": 7,
+      "heightRows": 12,
+      "turns": 6,
+      "schedule": [
+        {
+          "rowsBetween": 2,
+          "needlesEach": 2,
+          "repeats": 1
+        },
+        {
+          "rowsBetween": 2,
+          "needlesEach": 1,
+          "repeats": 5
+        }
+      ],
+      "note": "讲解称先急后缓；此处为引返，不应全部替换成普通平收。"
+    },
+    "shoulder": {
+      "stitchesEach": 25,
+      "heightRows": 12,
+      "turns": 6,
+      "needlesPerTurn": 3,
+      "remainingNeedles": 7,
+      "note": "视频采用每次3针引返6次，余7针；明确不选每次4针6次只余1针。肩部与领部同步进行，不能把两者行数顺次相加。"
+    }
+  },
+  "unresolvedRules": [
+    "37×3应为111，示例用110；15×3应为45，示例用46。不能据此假定全局向上、向下或四舍五入的统一取整规则。",
+    "23/3×4约30.67行，演示选30行；单双数调整、分段余行分配需明确。",
+    "11.mp4约03:10–03:16明确说其他两针/三针分配情形后面再研究，所以视频不是任意输入下的完整通用求解规则。",
+    "斜肩最小保留针数、每次引返针数如何自动选择，仅给了25针的一个示例。",
+    "袖片、袖山、袖口、V领、开衫门襟等的完整计算过程未在这两个手绘讲解视频中展开。"
+  ],
+  "implementation": {
+    "engine": "src/lib/knitting.mjs",
+    "geometry": "src/lib/pattern-geometry.mjs",
+    "drawing": "src/lib/pattern-drawing.js",
+    "newMeasurementBasis": "flat",
+    "legacyMeasurementBasis": "circumference",
+    "scope": "新工艺按平铺胸宽计算；旧记录保留整围口径。新增与计算使用同一引擎，详情、图纸、分享按保存参数重新计算，客户端派生parts不作为权威数据。",
+    "rounding": "默认最接近双数针/行，肩宽向下双数、领平留向上双数；调针在结果中明确展示。挂肩收针高度可填写，留空时采用视频示例的1/3。",
+    "limitations": "通用分配、袖子、V领和开衫扩展为确定性实现，视频没有提供这些款式全部工艺规则；针行守恒验证不能替代织样验证。",
+    "tests": "tests/knitting.test.mjs"
+  },
+  "historicalImplementationGaps": [
+    {
+      "file": "src/lib/domain.mjs",
+      "issue": "buildOriginalResults把胸围除以2，挂肩、袖口和袖山含固定比例推算；应与本次视频的单片宽度与明确尺寸规则协调替换，旧样例不能直接当作本次算法验收标准。"
+    },
+    {
+      "file": "src/lib/drawing.js",
+      "issue": "现有衣片轮廓主要使用固定坐标，部分标注为示例常量；新目标要求尺寸和计算结果共同驱动几何及标注。"
+    },
+    {
+      "file": "src/pages/calculate/calculate.vue",
+      "issue": "目前计算页与新增款式、保存工艺、生成图形不是一条完整流程。"
+    },
+    {
+      "file": "backend/ruoyi/ruoyi-admin/src/main/java/com/ruoyi/maoyi/CraftService.java",
+      "issue": "当前保存尺寸而parts为空；后续需保存/重建可验证的计算结果及算法版本，让详情、导出与分享使用一致的数据。"
+    }
+  ]
+}

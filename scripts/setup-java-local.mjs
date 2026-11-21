@@ -1,0 +1,30 @@
+import {execFileSync} from 'node:child_process';
+import {chmodSync,mkdirSync,existsSync,writeFileSync,readdirSync,readFileSync} from 'node:fs';
+import {randomBytes} from 'node:crypto';
+import {resolve} from 'node:path';
+import {detectDatabaseTimeZone,withDatabaseTimeZone} from './java-timezone.mjs';
+import {hashBackendPasswords} from './backend-password-hasher.mjs';
+const root=resolve(import.meta.dirname,'..');process.chdir(root);
+const config=resolve('.secrets/java-local.json');
+if(existsSync(config)){console.log('已有本地配置，未覆盖数据库或账号。');process.exit(0);}
+const sql=(text)=>execFileSync('mysql',['--protocol=socket','-uroot','--default-character-set=utf8mb4','-N'],{input:text,encoding:'utf8'});
+if(sql("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='maoyi_ruoyi'").trim())throw Error('maoyi_ruoyi 已存在，拒绝覆盖。');
+const accounts=[{account:'admin',name:'管理员',id:1,role:1},{account:'craftmaker',name:'工艺员',id:101,role:211},{account:'craftsupervisor',name:'工艺主管',id:102,role:212}].map(a=>({...a,password:randomBytes(15).toString('base64url')}));
+const hashes=hashBackendPasswords(accounts.map(a=>a.password));
+accounts.forEach((a,index)=>{a.hash=hashes[index];});
+const dbTimeZone=detectDatabaseTimeZone();
+const env={DB_TIME_ZONE:dbTimeZone,DB_URL:withDatabaseTimeZone('jdbc:mysql://127.0.0.1:3306/maoyi_ruoyi?useUnicode=true&characterEncoding=utf8',dbTimeZone),DB_USER:'maoyi_app',DB_PASSWORD:randomBytes(24).toString('base64url'),JWT_SECRET:randomBytes(48).toString('base64url'),REDIS_PORT:'6388',PUBLIC_ORIGIN:'http://127.0.0.1:5173',UPLOAD_PATH:resolve('.data/uploads'),WECHAT_APP_ID:'',WECHAT_APP_SECRET:''};
+mkdirSync('.secrets',{recursive:true,mode:0o700});mkdirSync('.data',{recursive:true});
+chmodSync('.secrets',0o700);
+// Persist recoverable credentials before the first database mutation; never print them.
+writeFileSync(config,JSON.stringify({env,accounts:accounts.map(({hash,...a})=>a)},null,2),{mode:0o600});
+sql("CREATE DATABASE maoyi_ruoyi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+const sqlRoot=resolve(root,'../maoyi-backend/sql');
+const seed=readdirSync(sqlRoot).find(n=>/^ry_.*\.sql$/.test(n));
+for(const path of [resolve(sqlRoot,seed),resolve(sqlRoot,'quartz.sql'),resolve(sqlRoot,'maoyi/001_business.sql')])sql('USE maoyi_ruoyi;\n'+readFileSync(path,'utf8'));
+let setup=`USE maoyi_ruoyi; UPDATE sys_user SET status='1',password='' WHERE user_id=2; UPDATE sys_user SET nick_name='管理员',email='',phonenumber='',password='${accounts[0].hash}' WHERE user_id=1;`;
+for(const a of accounts.slice(1))setup+=`INSERT INTO sys_user(user_id,dept_id,user_name,nick_name,password,status,del_flag,create_by,create_time) VALUES (${a.id},103,'${a.account}','${a.name}','${a.hash}','0','0','admin',NOW()); INSERT INTO sys_user_role(user_id,role_id) VALUES (${a.id},${a.role});`;
+setup+=`CREATE USER 'maoyi_app'@'127.0.0.1' IDENTIFIED BY '${env.DB_PASSWORD}'; GRANT SELECT,INSERT,UPDATE,DELETE ON maoyi_ruoyi.* TO 'maoyi_app'@'127.0.0.1';`;
+sql(setup);
+writeFileSync('.secrets/本地后台账号.txt',accounts.map(a=>`${a.name}\n账号：${a.account}\n密码：${a.password}\n`).join('\n')+'\n后台：http://127.0.0.1:5176\n小程序预览：http://127.0.0.1:5173\n',{mode:0o600});
+console.log('独立数据库、管理员、工艺员、主管已初始化。账号仅写入 .secrets/本地后台账号.txt。');

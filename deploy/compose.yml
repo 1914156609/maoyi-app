@@ -1,0 +1,71 @@
+name: maoyi
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      TZ: ${BUSINESS_TIME_ZONE:-Asia/Shanghai}
+      MYSQL_DATABASE: maoyi_ruoyi
+      MYSQL_USER: maoyi_app
+      MYSQL_PASSWORD: ${DB_PASSWORD:?请先生成部署配置}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请先生成部署配置}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../../maoyi-backend/sql/ry_20261117.sql:/docker-entrypoint-initdb.d/01-ruoyi.sql:ro
+      - ../../maoyi-backend/sql/quartz.sql:/docker-entrypoint-initdb.d/02-quartz.sql:ro
+      - ../../maoyi-backend/sql/maoyi/001_business.sql:/docker-entrypoint-initdb.d/03-maoyi.sql:ro
+      - ../.secrets/deploy-init.sql:/docker-entrypoint-initdb.d/04-accounts.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redis_data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  api:
+    build:
+      context: ../..
+      dockerfile: maoyi-app/deploy/Dockerfile.java
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/maoyi_ruoyi?useUnicode=true&characterEncoding=utf8&serverTimezone=${BUSINESS_TIME_ZONE:-Asia/Shanghai}&allowPublicKeyRetrieval=true&useSSL=false
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${BUSINESS_TIME_ZONE:-Asia/Shanghai}
+      DB_USER: maoyi_app
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?请先生成部署配置}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?必须配置分享域名}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+    volumes: ["uploads:/app/.data/uploads", "logs:/app/.data/logs"]
+    depends_on:
+      mysql: {condition: service_healthy}
+      redis: {condition: service_healthy}
+  mini:
+    build:
+      context: ../..
+      dockerfile: maoyi-app/deploy/Dockerfile.web
+    restart: unless-stopped
+    ports: ["127.0.0.1:8090:80"]
+    depends_on: [api]
+  admin:
+    build:
+      context: ../..
+      dockerfile: maoyi-app/deploy/Dockerfile.admin
+    restart: unless-stopped
+    ports: ["127.0.0.1:8091:80"]
+    depends_on: [api]
+volumes:
+  mysql_data:
+  redis_data:
+  uploads:
+  logs:

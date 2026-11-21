@@ -1,0 +1,135 @@
+{
+  "pie": {
+    "color": [
+      "#5470c6",
+      "#91cc75",
+      "#fac858",
+      "#ee6666",
+      "#73c0de",
+      "#3ba272",
+      "#fc8452",
+      "#9a60b4",
+      "#ea7ccc"
+    ],
+    "textStyle": {
+      "fontFamily": "sans-serif",
+      "fontSize": 12,
+      "fontStyle": "normal",
+      "fontWeight": "normal"
+    },
+    "series.0.radius": [
+      15,
+      95
+    ],
+    "series.0.center": [
+      "50%",
+      "38%"
+    ],
+    "series.0.startAngle": 90,
+    "series.0.endAngle": "auto",
+    "series.0.labelLine": {
+      "show": true,
+      "length": 15,
+      "length2": 15,
+      "smooth": false,
+      "minTurnAngle": 90,
+      "maxSurfaceAngle": 90,
+      "lineStyle": {
+        "width": 1,
+        "type": "solid"
+      }
+    }
+  },
+  "gauge": {
+    "color": [
+      "#5470c6",
+      "#91cc75",
+      "#fac858",
+      "#ee6666",
+      "#73c0de",
+      "#3ba272",
+      "#fc8452",
+      "#9a60b4",
+      "#ea7ccc"
+    ],
+    "textStyle": {
+      "fontFamily": "sans-serif",
+      "fontSize": 12,
+      "fontStyle": "normal",
+      "fontWeight": "normal"
+    },
+    "series.0.axisLine": {
+      "show": true,
+      "roundCap": false,
+      "lineStyle": {
+        "color": [
+          [
+            1,
+            "#E6EBF8"
+          ]
+        ],
+        "width": 10
+      }
+    },
+    "series.0.axisLabel": {
+      "show": true,
+      "distance": 15,
+      "color": "#464646",
+      "fontSize": 12,
+      "rotate": 0
+    },
+    "series.0.axisTick": {
+      "show": true,
+      "splitNumber": 5,
+      "length": 6,
+      "distance": 10,
+      "lineStyle": {
+        "color": "#63677A",
+        "width": 1,
+        "type": "solid"
+      }
+    },
+    "series.0.splitLine": {
+      "show": true,
+      "length": 10,
+      "distance": 10,
+      "lineStyle": {
+        "color": "#63677A",
+        "width": 3,
+        "type": "solid"
+      }
+    },
+    "series.0.title": {
+      "offsetCenter": [
+        0,
+        "20%"
+      ],
+      "fontSize": 16,
+      "show": true,
+      "color": "#464646",
+      "valueAnimation": false
+    },
+    "series.0.detail": {
+      "offsetCenter": [
+        0,
+        "40%"
+      ],
+      "fontSize": 30,
+      "lineHeight": 30,
+      "formatter": "2.5M",
+      "show": true,
+      "backgroundColor": "rgba(0,0,0,0)",
+      "borderWidth": 0,
+      "borderColor": "#ccc",
+      "width": 100,
+      "height": null,
+      "padding": [
+        5,
+        10
+      ],
+      "color": "#464646",
+      "fontWeight": "bold",
+      "valueAnimation": false
+    }
+  }
+}
